@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>ARVIS - Matthew</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -13,9 +14,7 @@
 
     .notification-bar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       background: linear-gradient(90deg, #f59e0b, #d97706);
       color: #000;
       padding: 12px;
@@ -46,14 +45,16 @@
         🔔
         <span id="notif-badge" class="hidden absolute top-1 right-1 w-3 h-3 bg-yellow-500 rounded-full"></span>
       </button>
-      <button onclick="logout()" class="p-3 rounded-full bg-gray-900 border border-gray-800">🔒</button>
+      <button onclick="logout()" class="p-3 rounded-full bg-gray-900 border border-gray-800">
+        🔒
+      </button>
     </div>
   </div>
 
-  <!-- Time -->
+  <!-- Time / Status -->
   <div class="mb-4 p-5 rounded-2xl bg-gray-900 border border-gray-800">
     <div id="time" class="text-5xl font-light mb-2">--:--</div>
-    <div id="date" class="text-xl text-gray-400 mb-3">Loading...</div>
+    <div id="date" class="text-xl text-gray-400 mb-3">Loading…</div>
     <div class="flex gap-4 text-sm text-gray-400">
       <span id="local-ip">IP: —</span>
       <span>WiFi: Connected</span>
@@ -77,82 +78,91 @@
 </div>
 
 <script>
-/* ---------------- SAFE CORE ---------------- */
+/* ================= CORE ================= */
 
-// Inactivity logout
+const $ = id => document.getElementById(id);
+
+/* Auto-lock */
 let inactivityTimer;
 function resetInactivityTimer() {
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(logout, 5 * 60 * 1000);
 }
-document.addEventListener('click', resetInactivityTimer);
-document.addEventListener('touchstart', resetInactivityTimer);
+document.addEventListener("click", resetInactivityTimer);
+document.addEventListener("touchstart", resetInactivityTimer);
 resetInactivityTimer();
 
-// Time
+/* Time */
 function updateTime() {
   const now = new Date();
-  time.textContent = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
-  date.textContent = now.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+  $("time").textContent = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  $("date").textContent = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 }
 setInterval(updateTime, 1000);
 updateTime();
 
-// Local IP (fails silently on old browsers)
+/* Local IP (safe fail) */
 try {
-  const pc = new RTCPeerConnection({iceServers:[]});
-  pc.createDataChannel('');
+  const pc = new RTCPeerConnection({ iceServers: [] });
+  pc.createDataChannel("");
   pc.createOffer().then(o => pc.setLocalDescription(o));
   pc.onicecandidate = e => {
     if (!e || !e.candidate) return;
-    const ip = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
-    if (ip) local-ip.textContent = `IP: ${ip[1]}`;
+    const match = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+    if (match) $("local-ip").textContent = `IP: ${match[1]}`;
     pc.onicecandidate = null;
   };
-} catch {}
+} catch {
+  $("local-ip").textContent = "IP: unavailable";
+}
 
-// Quote (safe)
-fetch('https://api.quotable.io/random')
+/* Quote */
+fetch("https://api.quotable.io/random")
   .then(r => r.json())
   .then(d => {
-    quote.textContent = `"${d.content}"`;
-    author.textContent = `— ${d.author}`;
+    $("quote").textContent = `"${d.content}"`;
+    $("author").textContent = `— ${d.author}`;
   })
   .catch(() => {
-    quote.textContent = `"Stay locked in."`;
-    author.textContent = "— ARVIS";
+    $("quote").textContent = `"Stay locked in."`;
+    $("author").textContent = "— ARVIS";
   });
 
-// Weekend countdown
+/* Weekend countdown */
 function updateWeekendCountdown() {
   const now = new Date();
   let target = new Date(now);
 
   if (now.getDay() < 5) {
     target.setDate(now.getDate() + (5 - now.getDay()));
-    target.setHours(15,45,0,0);
+    target.setHours(15, 45, 0, 0);
   } else {
     target.setDate(now.getDate() + ((8 - now.getDay()) % 7));
-    target.setHours(0,0,0,0);
+    target.setHours(0, 0, 0, 0);
   }
 
   const diff = target - now;
-  const h = Math.floor(diff / 36e5);
-  const m = Math.floor((diff % 36e5) / 6e4);
-  weekend-time.textContent = `${h}h ${m}m`;
+  const hours = Math.floor(diff / 36e5);
+  const mins = Math.floor((diff % 36e5) / 6e4);
+  $("weekend-time").textContent = `${hours}h ${mins}m`;
 }
 setInterval(updateWeekendCountdown, 1000);
 updateWeekendCountdown();
 
-// Logout
+/* Notifications (placeholder safe) */
+function openNotifications() {
+  alert("Notifications panel coming next");
+}
+
+/* Logout */
 function logout() {
   sessionStorage.clear();
   location.href = "index.html";
 }
 
-/* -------- ERROR HANDLING (NO RELOADS) -------- */
-window.addEventListener('error', e => {
-  console.warn("JS error caught:", e.message);
+/* Error handling — NO reloads */
+window.addEventListener("error", e => {
+  console.warn("JS error:", e.message);
 });
 </script>
 
