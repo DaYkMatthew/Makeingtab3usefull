@@ -455,12 +455,6 @@
       sessionStorage.clear();
       window.location.href = 'index.html';
     }
-
-    // Watchdog - detect crashes
-    window.addEventListener('error', () => {
-      console.log('Error detected, reloading...');
-      setTimeout(() => location.reload(), 1000);
-    });
   </script>
 </body>
 </html>
