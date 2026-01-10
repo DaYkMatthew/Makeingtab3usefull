@@ -27,11 +27,22 @@
       25% { transform: translateX(-10px); }
       75% { transform: translateX(10px); }
     }
-    .shake { animation: shake 0.3s; }
+    .shake { animation: shake 0.3s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    button {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
   </style>
 </head>
 <body>
-  <div class="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
+  <div class="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 fade-in">
     <div class="mb-16">
       <h1 class="text-6xl font-light text-white mb-2 tracking-wider">ARVIS</h1>
       <p class="text-gray-500 text-center text-sm tracking-widest">HOME ASSISTANT</p>
@@ -42,21 +53,21 @@
     <div id="pin-display" class="text-4xl text-white mb-12 font-mono tracking-widest h-12"></div>
 
     <div class="grid grid-cols-3 gap-5">
-      <button onclick="addDigit('1')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">1</button>
-      <button onclick="addDigit('2')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">2</button>
-      <button onclick="addDigit('3')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">3</button>
-      <button onclick="addDigit('4')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">4</button>
-      <button onclick="addDigit('5')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">5</button>
-      <button onclick="addDigit('6')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">6</button>
-      <button onclick="addDigit('7')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">7</button>
-      <button onclick="addDigit('8')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">8</button>
-      <button onclick="addDigit('9')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">9</button>
+      <button onclick="addDigit('1')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">1</button>
+      <button onclick="addDigit('2')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">2</button>
+      <button onclick="addDigit('3')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">3</button>
+      <button onclick="addDigit('4')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">4</button>
+      <button onclick="addDigit('5')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">5</button>
+      <button onclick="addDigit('6')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">6</button>
+      <button onclick="addDigit('7')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">7</button>
+      <button onclick="addDigit('8')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">8</button>
+      <button onclick="addDigit('9')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">9</button>
       <div></div>
-      <button onclick="addDigit('0')" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-3xl border border-gray-800 transition-all">0</button>
-      <button onclick="backspace()" class="w-24 h-24 rounded-full bg-gray-900 active:bg-gray-700 text-white text-2xl border border-gray-800 transition-all">⌫</button>
+      <button onclick="addDigit('0')" class="w-24 h-24 rounded-full bg-gray-900 text-white text-3xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">0</button>
+      <button onclick="backspace()" class="w-24 h-24 rounded-full bg-gray-900 text-white text-2xl border border-gray-800 hover:bg-gray-800 hover:border-gray-700">⌫</button>
     </div>
 
-    <p id="error-msg" class="text-red-500 mt-8 text-sm opacity-0 transition-opacity">Invalid PIN</p>
+    <p id="error-msg" class="text-red-500 mt-8 text-sm opacity-0 transition-opacity duration-300">Invalid PIN</p>
   </div>
 
   <script>
@@ -88,7 +99,6 @@
     }
 
     function updateDisplay() {
-      // Show asterisks instead of dots - completely hidden
       display.textContent = '*'.repeat(pin.length);
     }
 
@@ -112,7 +122,6 @@
       }
     }
 
-    // Clear session on initial load
     if (!sessionStorage.getItem('arvis_returning')) {
       sessionStorage.clear();
     }
