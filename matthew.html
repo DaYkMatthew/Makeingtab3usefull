@@ -140,14 +140,14 @@
         <div class="flex justify-between items-center p-3 rounded-xl glass">
           <span>Room Light</span>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" onchange="toggleLight('room')">
+            <input type="checkbox" id="room-light" class="sr-only peer" onchange="toggleLight('room')">
             <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
           </label>
         </div>
         <div class="flex justify-between items-center p-3 rounded-xl glass">
           <span>LED Light</span>
           <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" class="sr-only peer" onchange="toggleLight('led')">
+            <input type="checkbox" id="led-light" class="sr-only peer" onchange="toggleLight('led')">
             <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
           </label>
         </div>
@@ -351,23 +351,45 @@
     setInterval(updateWeekendCountdown, 1000);
     updateWeekendCountdown();
 
-    // Lights
+    // Lights - Load saved states on page load
+    window.addEventListener('load', () => {
+      const roomState = localStorage.getItem('arvis_room_light') === 'on';
+      const ledState = localStorage.getItem('arvis_led_light') === 'on';
+      document.getElementById('room-light').checked = roomState;
+      document.getElementById('led-light').checked = ledState;
+    });
+
+    // Lights control
     async function toggleLight(type) {
+      const checkbox = document.getElementById(`${type}-light`);
+      const isOn = checkbox.checked;
+      
       if (type === 'led') {
-        const checkbox = event.target;
-        const isOn = checkbox.checked;
         const url = isOn 
           ? 'https://api-v2.voicemonkey.io/trigger?token=a39d2a6a59188f40be7fd47dcc8ada77_ef9bba4c4a30724315c537c97027b0fc&device=ledon'
           : 'https://api-v2.voicemonkey.io/trigger?token=a39d2a6a59188f40be7fd47dcc8ada77_ef9bba4c4a30724315c537c97027b0fc&device=ledoff';
         
         try {
           await fetch(url, { mode: 'no-cors' });
+          localStorage.setItem('arvis_led_light', isOn ? 'on' : 'off');
           console.log(`LED turned ${isOn ? 'ON' : 'OFF'}`);
         } catch (error) {
           console.error('Failed to control LED:', error);
+          checkbox.checked = !isOn; // Revert on error
         }
-      } else {
-        alert('Room Light toggled!\n\nConnect to smart home system to make this work.');
+      } else if (type === 'room') {
+        const url = isOn 
+          ? 'https://api-v2.voicemonkey.io/trigger?token=a39d2a6a59188f40be7fd47dcc8ada77_ef9bba4c4a30724315c537c97027b0fc&device=switchon'
+          : 'https://api-v2.voicemonkey.io/trigger?token=a39d2a6a59188f40be7fd47dcc8ada77_ef9bba4c4a30724315c537c97027b0fc&device=switchoff';
+        
+        try {
+          await fetch(url, { mode: 'no-cors' });
+          localStorage.setItem('arvis_room_light', isOn ? 'on' : 'off');
+          console.log(`Room Light turned ${isOn ? 'ON' : 'OFF'}`);
+        } catch (error) {
+          console.error('Failed to control Room Light:', error);
+          checkbox.checked = !isOn; // Revert on error
+        }
       }
     }
 
