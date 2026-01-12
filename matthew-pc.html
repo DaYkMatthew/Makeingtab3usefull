@@ -114,20 +114,35 @@
     const PC_SERVER = 'http://192.168.1.152:3000';
     const PIN = '0920';
 
-    // Check PC status on load
+    // Check PC status on load (using image trick since CORS blocks us)
     async function checkStatus() {
-      try {
-        const response = await fetch(`${PC_SERVER}/status?pin=${PIN}`, {
-          method: 'GET',
-          mode: 'no-cors'
-        });
-        // With no-cors, we can't read the response, but if it doesn't throw, server is up
-        document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-green-500 status-online';
-        document.getElementById('statusText').textContent = 'PC Status: Online';
-      } catch (error) {
+      const img = new Image();
+      const timeout = setTimeout(() => {
         document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-red-500';
         document.getElementById('statusText').textContent = 'PC Status: Offline';
-      }
+      }, 2000);
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-green-500 status-online';
+        document.getElementById('statusText').textContent = 'PC Status: Online';
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        // Try direct fetch as fallback
+        fetch(`${PC_SERVER}/status?pin=${PIN}`, { mode: 'no-cors' })
+          .then(() => {
+            document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-green-500 status-online';
+            document.getElementById('statusText').textContent = 'PC Status: Online';
+          })
+          .catch(() => {
+            document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-red-500';
+            document.getElementById('statusText').textContent = 'PC Status: Offline';
+          });
+      };
+      
+      img.src = `${PC_SERVER}/status?pin=${PIN}&t=${Date.now()}`;
     }
 
     // Send command to PC
@@ -138,19 +153,17 @@
       showMessage(`Sending ${action} command...`, 'blue');
 
       try {
-        const response = await fetch(`${PC_SERVER}/${action}?pin=${PIN}`, {
+        // Use fetch with no-cors mode since we can't read response anyway
+        await fetch(`${PC_SERVER}/${action}?pin=${PIN}`, {
           method: 'GET',
-          mode: 'cors'
+          mode: 'no-cors'
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          showMessage(`✓ ${action.toUpperCase()} command sent successfully!`, 'green');
-        } else {
-          throw new Error('Command failed');
-        }
+        
+        // If no error thrown, assume success
+        showMessage(`✓ ${action.toUpperCase()} command sent!`, 'green');
+        
       } catch (error) {
-        showMessage(`✗ Failed to send ${action} command. Check if PC server is running.`, 'red');
+        showMessage(`✗ Failed to send ${action}. Is PC server running?`, 'red');
         console.error('Error:', error);
       } finally {
         btn.classList.remove('loading');
