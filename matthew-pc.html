@@ -191,22 +191,14 @@
     // Check PC status on load
     async function checkStatus() {
       try {
-        // Try to ping the server
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 2000);
+        const response = await fetch(`${PC_SERVER}/status?pin=${PIN}`);
+        const data = await response.json();
         
-        await fetch(`${PC_SERVER}/status?pin=${PIN}`, {
-          method: 'GET',
-          mode: 'no-cors',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeout);
-        
-        // If we get here, server is online
-        document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-green-500 status-pulse';
-        document.getElementById('statusText').textContent = 'Online';
-        document.getElementById('statusIcon').className = 'w-7 h-7 text-green-400';
+        if (data.status === 'online') {
+          document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-green-500 status-pulse';
+          document.getElementById('statusText').textContent = 'Online';
+          document.getElementById('statusIcon').className = 'w-7 h-7 text-green-400';
+        }
       } catch (error) {
         document.getElementById('statusDot').className = 'w-3 h-3 rounded-full bg-red-500';
         document.getElementById('statusText').textContent = 'Offline';
@@ -221,7 +213,6 @@
     // Send command to PC
     async function sendCommand(action) {
       const btn = event.target.closest('button');
-      const originalHTML = btn.innerHTML;
       
       // Show loading state
       btn.style.opacity = '0.6';
@@ -230,25 +221,23 @@
       showToast('⏳', `Sending ${action}...`, '#3b82f6');
 
       try {
-        // Send command
-        await fetch(`${PC_SERVER}/${action}?pin=${PIN}`, {
-          method: 'GET',
-          mode: 'no-cors'
-        });
+        const response = await fetch(`${PC_SERVER}/${action}?pin=${PIN}`);
+        const data = await response.json();
         
-        // Success
-        showToast('✓', `${action.toUpperCase()} command sent!`, '#10b981');
+        if (data.success) {
+          showToast('✓', `${action.toUpperCase()} executed!`, '#10b981');
+        } else {
+          throw new Error('Command failed');
+        }
         
       } catch (error) {
-        // Error
-        showToast('✗', `Failed to send ${action}`, '#ef4444');
+        showToast('✗', `Failed: ${error.message || 'Server offline'}`, '#ef4444');
         console.error('Error:', error);
       } finally {
-        // Reset button
         setTimeout(() => {
           btn.style.opacity = '1';
           btn.style.pointerEvents = 'auto';
-        }, 300);
+        }, 500);
       }
     }
 
